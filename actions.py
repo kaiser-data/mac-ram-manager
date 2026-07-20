@@ -74,6 +74,28 @@ def kill_group(group_name: str, force: bool = False) -> dict:
             "signal": sig.name}
 
 
+def kill_pid(pid: int, force: bool = False) -> dict:
+    """Signal one specific process — must be user-owned and not protected."""
+    if not isinstance(pid, int) or pid <= 1:
+        raise ActionError("invalid pid")
+    own_uid = os.getuid()
+    match = next(
+        (p for p in memstats.list_processes()
+         if p["pid"] == pid and p["uid"] == own_uid), None)
+    if match is None:
+        raise ActionError(f"pid {pid} not found or not owned by you")
+    if match["group"] in PROTECTED_GROUPS or pid == os.getpid():
+        raise ActionError(f"process '{match['group']}' is protected")
+    sig = signal.SIGKILL if force else signal.SIGTERM
+    try:
+        os.kill(pid, sig)
+    except ProcessLookupError:
+        pass  # already exited — treat as success
+    except PermissionError as exc:
+        raise ActionError(f"no permission to signal pid {pid}") from exc
+    return {"pid": pid, "group": match["group"], "signal": sig.name}
+
+
 def relaunch_group(group_name: str) -> dict:
     """Quit an app's processes, then reopen it via `open -a`."""
     result = kill_group(group_name, force=False)

@@ -19,9 +19,14 @@ background items from autostarting at login.
   reclaimable cache, and a pressure pill fed by the kernel's own
   `memorystatus_vm_pressure_level`. Refreshes every 5 seconds; light & dark mode.
 - **One-hour history** — memory and swap as a two-series chart with hover crosshair.
+- **Memory composition bar** — how "used" actually adds up (app + wired +
+  compressed + cached + free), so the numbers are explainable at a glance.
 - **Top memory consumers** — processes grouped per app (a browser's 20 helper
   processes fold into one row), with **Quit** (SIGTERM), **Relaunch**
-  (quit + reopen), and **Force** (SIGKILL) buttons.
+  (quit + reopen), and **Force** (SIGKILL) buttons. Click a group to expand
+  every individual process with its own RAM figure and per-PID Quit/Force
+  controls; a filter box narrows the list, and a tail line reports what falls
+  below the top-15 cutoff.
 - **Startup items** — every launchd agent with its live state; *Disable autostart*
   keeps it from ever launching at login again.
 - **Homebrew services** — stop, start, or restart them in one click.
@@ -80,6 +85,7 @@ page at load.
 |---|---|---|---|
 | `/api/stats` | GET | – | full snapshot: memory, swap, pressure, groups, history, services, agents |
 | `/api/kill-group` | POST | `{name, force?}` | SIGTERM/SIGKILL all your processes in a group |
+| `/api/kill-pid` | POST | `{pid, force?}` | signal one specific process |
 | `/api/relaunch-group` | POST | `{name}` | quit an app, then `open -a` it again |
 | `/api/service` | POST | `{name, action}` | brew service start/stop/restart |
 | `/api/launchd` | POST | `{label, action}` | agent stop/start/enable/disable |

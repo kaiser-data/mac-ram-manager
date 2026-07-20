@@ -150,29 +150,53 @@ def list_processes() -> list[dict]:
     return processes
 
 
-def top_groups(limit: int = 15) -> list[dict]:
-    """Processes aggregated by app/group, sorted by total RSS."""
+def top_groups(limit: int = 15) -> dict:
+    """Processes aggregated by app/group, sorted by total RSS.
+
+    Returns the top groups (each with its individual processes) plus a
+    summary of the tail that falls below the cutoff, so the UI can show
+    what it is *not* showing.
+    """
     own_uid = os.getuid()
     groups: dict[str, dict] = {}
     for proc in list_processes():
         entry = groups.setdefault(
             proc["group"],
             {"name": proc["group"], "rssBytes": 0, "processCount": 0,
-             "killable": False, "pids": []},
+             "killable": False, "pids": [], "processes": []},
         )
         entry["rssBytes"] += proc["rssBytes"]
         entry["processCount"] += 1
-        if proc["uid"] == own_uid:
+        is_owned = proc["uid"] == own_uid
+        if is_owned:
             entry["killable"] = True
             entry["pids"].append(proc["pid"])
+        entry["processes"].append({
+            "pid": proc["pid"],
+            "rssBytes": proc["rssBytes"],
+            "name": os.path.basename(proc["command"]),
+            "killable": is_owned,
+        })
     ranked = sorted(groups.values(), key=lambda g: g["rssBytes"], reverse=True)
-    return ranked[:limit]
+    for group in ranked:
+        group["processes"].sort(key=lambda p: p["rssBytes"], reverse=True)
+    tail = ranked[limit:]
+    return {
+        "top": ranked[:limit],
+        "tailGroupCount": len(tail),
+        "tailProcessCount": sum(g["processCount"] for g in tail),
+        "tailRssBytes": sum(g["rssBytes"] for g in tail),
+        "totalRssBytes": sum(g["rssBytes"] for g in ranked),
+        "totalProcessCount": sum(g["processCount"] for g in ranked),
+    }
 
 
 def get_stats(top_limit: int = 15) -> dict:
+    grouped = top_groups(top_limit)
     return {
         "memory": get_memory(),
         "swap": get_swap(),
         "pressure": get_pressure(),
-        "topGroups": top_groups(top_limit),
+        "topGroups": grouped["top"],
+        "processSummary": {k: v for k, v in grouped.items() if k != "top"},
     }

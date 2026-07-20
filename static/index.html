@@ -54,6 +54,15 @@
 
   <section class="card">
     <div class="card-head">
+      <h2>Memory composition</h2>
+      <p class="muted">how the "used" figure adds up — app + wired + compressed; cached files are reclaimable</p>
+    </div>
+    <div id="composition-bar" class="comp-bar" role="img" aria-label="Memory composition"></div>
+    <div id="composition-legend" class="comp-legend"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
       <h2>Last hour</h2>
       <div class="legend" aria-label="Series legend">
         <span class="legend-item"><span class="swatch swatch-mem"></span>Memory used</span>
@@ -69,9 +78,15 @@
   <section class="card">
     <div class="card-head">
       <h2>Top memory consumers</h2>
-      <p class="muted">grouped by app · Quit sends SIGTERM, Force sends SIGKILL</p>
+      <input id="proc-filter" class="filter-input" type="search"
+             placeholder="filter processes…" aria-label="Filter processes">
     </div>
+    <p class="muted explain">grouped by app — click a row to see and stop individual
+      processes · Quit sends SIGTERM, Force sends SIGKILL. Resident sizes don't sum
+      to the "used" tile: compressed/swapped pages and wired kernel memory belong
+      to no row here.</p>
     <div id="process-list" class="process-list" aria-live="polite"></div>
+    <p id="proc-tail" class="muted tail-note"></p>
   </section>
 
   <section class="card">

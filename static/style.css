@@ -118,6 +118,49 @@ body { background: var(--page); }
 }
 .tooltip .tt-row { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
 
+/* -- memory composition bar ------------------------------------------- */
+.comp-bar {
+  display: flex; height: 26px; border-radius: 6px; overflow: hidden;
+  background: var(--grid); gap: 2px;
+}
+.comp-seg { min-width: 3px; }
+.comp-seg.app { background: var(--seq-450); }
+.comp-seg.wired { background: var(--seq-300); }
+.comp-seg.compressed { background: #eda100; }
+.comp-seg.cached { background: var(--baseline); }
+.comp-seg.free { background: transparent; }
+.comp-legend {
+  display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px;
+  font-size: 12px; color: var(--text-secondary);
+}
+.comp-legend .swatch.app { background: var(--seq-450); }
+.comp-legend .swatch.wired { background: var(--seq-300); }
+.comp-legend .swatch.compressed { background: #eda100; }
+.comp-legend .swatch.cached { background: var(--baseline); }
+.comp-legend .swatch.free { background: var(--grid); }
+
+/* -- filter & tail ----------------------------------------------------- */
+.filter-input {
+  font: inherit; font-size: 13px; color: var(--text-primary);
+  background: var(--page); border: 1px solid var(--border);
+  border-radius: 8px; padding: 5px 10px; width: 210px;
+}
+.explain { margin: -6px 0 10px; max-width: 72ch; }
+.tail-note { margin-top: 10px; }
+
+/* -- expanded per-process detail --------------------------------------- */
+.proc-row.expandable { cursor: pointer; }
+.proc-detail { padding: 2px 8px 8px 24px; }
+.proc-child {
+  display: grid; grid-template-columns: 1fr 90px 80px auto;
+  gap: 12px; align-items: center; padding: 4px 0;
+  font-size: 12px; color: var(--text-secondary);
+  border-bottom: 1px solid var(--grid);
+}
+.proc-child:last-child { border-bottom: none; }
+.proc-child .pid { font-variant-numeric: tabular-nums; color: var(--muted); }
+.proc-child .rss { font-variant-numeric: tabular-nums; text-align: right; }
+
 /* -- process list ----------------------------------------------------- */
 .process-list { display: flex; flex-direction: column; gap: 2px; }
 .proc-row {

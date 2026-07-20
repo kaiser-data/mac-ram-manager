@@ -168,18 +168,84 @@ function attachHover(svg, history, x, y) {
   };
 }
 
+/* ---------- memory composition ---------- */
+
+const COMP_SEGMENTS = [
+  { key: "appBytes", cls: "app", label: "App memory" },
+  { key: "wiredBytes", cls: "wired", label: "Wired (kernel)" },
+  { key: "compressedBytes", cls: "compressed", label: "Compressed" },
+  { key: "cachedBytes", cls: "cached", label: "Cached files" },
+  { key: "freeBytes", cls: "free", label: "Free" },
+];
+
+function renderComposition(memory) {
+  const bar = $("composition-bar");
+  const legend = $("composition-legend");
+  const total = memory.totalBytes;
+  bar.replaceChildren(...COMP_SEGMENTS.map(({ key, cls, label }) => {
+    const seg = document.createElement("div");
+    seg.className = "comp-seg " + cls;
+    seg.style.flexBasis = ((memory[key] / total) * 100).toFixed(2) + "%";
+    seg.title = `${label}: ${fmtBytes(memory[key])}`;
+    return seg;
+  }));
+  legend.replaceChildren(...COMP_SEGMENTS.map(({ key, cls, label }) => {
+    const item = document.createElement("span");
+    item.className = "legend-item";
+    const swatch = document.createElement("span");
+    swatch.className = "swatch " + cls;
+    item.append(swatch, `${label} ${fmtBytes(memory[key])}`);
+    return item;
+  }));
+}
+
 /* ---------- process groups ---------- */
+
+const expandedGroups = new Set();
+let filterText = "";
+
+function makeChildRow(child) {
+  const row = document.createElement("div");
+  row.className = "proc-child";
+  const name = document.createElement("span");
+  name.textContent = child.name;
+  const pid = document.createElement("span");
+  pid.className = "pid";
+  pid.textContent = "pid " + child.pid;
+  const rss = document.createElement("span");
+  rss.className = "rss";
+  rss.textContent = fmtBytes(child.rssBytes);
+  const buttons = document.createElement("span");
+  buttons.className = "proc-actions";
+  if (child.killable) {
+    buttons.append(
+      makeButton("Quit", "btn", () => runAction("/api/kill-pid",
+        { pid: child.pid }, `Quit pid ${child.pid} (${child.name})?`)),
+      makeButton("Force", "btn btn-danger", () => runAction("/api/kill-pid",
+        { pid: child.pid, force: true },
+        `FORCE KILL pid ${child.pid} (${child.name})? Unsaved data will be lost.`)),
+    );
+  }
+  row.append(name, pid, rss, buttons);
+  return row;
+}
 
 function renderProcesses(groups) {
   const container = $("process-list");
+  if (filterText) {
+    groups = groups.filter((g) =>
+      g.name.toLowerCase().includes(filterText) ||
+      (g.processes || []).some((p) => p.name.toLowerCase().includes(filterText)));
+  }
   const maxRss = Math.max(...groups.map((g) => g.rssBytes), 1);
-  container.replaceChildren(...groups.map((group) => {
+  container.replaceChildren(...groups.flatMap((group) => {
     const row = document.createElement("div");
-    row.className = "proc-row";
+    row.className = "proc-row expandable";
 
+    const isOpen = expandedGroups.has(group.name);
     const name = document.createElement("div");
     name.className = "proc-name";
-    name.textContent = group.name;
+    name.textContent = (isOpen ? "▾ " : "▸ ") + group.name;
     name.title = group.name;
     const count = document.createElement("span");
     count.className = "proc-count";
@@ -214,8 +280,31 @@ function renderProcesses(groups) {
     }
 
     row.append(name, track, mem, actionsBox);
-    return row;
+    row.onclick = (event) => {
+      if (event.target.closest("button")) return;
+      if (expandedGroups.has(group.name)) expandedGroups.delete(group.name);
+      else expandedGroups.add(group.name);
+      renderProcesses(latest.topGroups || []);
+    };
+
+    const rows = [row];
+    if (isOpen && group.processes) {
+      const detail = document.createElement("div");
+      detail.className = "proc-detail";
+      detail.append(...group.processes.map(makeChildRow));
+      rows.push(detail);
+    }
+    return rows;
   }));
+}
+
+function renderTail(summary) {
+  const note = $("proc-tail");
+  if (!summary) { note.textContent = ""; return; }
+  note.textContent =
+    `…plus ${summary.tailGroupCount} smaller groups ` +
+    `(${summary.tailProcessCount} processes, ${fmtBytes(summary.tailRssBytes)}) below the cutoff · ` +
+    `all ${summary.totalProcessCount} processes resident: ${fmtBytes(summary.totalRssBytes)}`;
 }
 
 function makeButton(label, className, onClick) {
@@ -321,8 +410,10 @@ async function refresh() {
   try {
     latest = await api("/api/stats");
     renderTiles(latest);
+    renderComposition(latest.memory);
     renderChart(latest.history || []);
     renderProcesses(latest.topGroups || []);
+    renderTail(latest.processSummary);
     renderServices(latest.services || []);
     renderAgents(latest.agents || []);
   } catch (error) {
@@ -332,6 +423,11 @@ async function refresh() {
 
 $("purge-btn").onclick = () =>
   runAction("/api/purge", {}, "Purge the disk cache now?");
+
+$("proc-filter").oninput = (event) => {
+  filterText = event.target.value.trim().toLowerCase();
+  if (latest) renderProcesses(latest.topGroups || []);
+};
 
 refresh();
 setInterval(refresh, REFRESH_MS);

@@ -114,6 +114,9 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == "/api/kill-group":
                 self._ok(actions.kill_group(
                     body.get("name", ""), bool(body.get("force", False))))
+            elif self.path == "/api/kill-pid":
+                self._ok(actions.kill_pid(
+                    body.get("pid", 0), bool(body.get("force", False))))
             elif self.path == "/api/relaunch-group":
                 self._ok(actions.relaunch_group(body.get("name", "")))
             elif self.path == "/api/launchd":
