@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RAM Manager</title>
+<link rel="stylesheet" href="/static/style.css">
+<script>window.RAM_TOKEN = "__RAM_TOKEN__";</script>
+</head>
+<body>
+<main class="viz-root">
+  <header class="topbar">
+    <div>
+      <h1>RAM Manager</h1>
+      <p class="subtitle">localhost · refreshes every 5&thinsp;s</p>
+    </div>
+    <div class="topbar-right">
+      <span id="pressure-pill" class="pill">
+        <span id="pressure-icon" aria-hidden="true">●</span>
+        <span id="pressure-text">…</span>
+      </span>
+      <span id="updated" class="muted"></span>
+    </div>
+  </header>
+
+  <section class="kpi-row" aria-label="Key memory figures">
+    <article class="tile">
+      <h2>Memory used</h2>
+      <p class="value"><span id="mem-used">–</span><span class="unit"> / <span id="mem-total">–</span></span></p>
+      <div class="meter" role="meter" aria-label="Memory used">
+        <div id="mem-meter" class="meter-fill"></div>
+      </div>
+      <p class="tile-foot muted" id="mem-detail"></p>
+    </article>
+    <article class="tile">
+      <h2>Swap used</h2>
+      <p class="value"><span id="swap-used">–</span><span class="unit"> / <span id="swap-total">–</span></span></p>
+      <div class="meter" role="meter" aria-label="Swap used">
+        <div id="swap-meter" class="meter-fill"></div>
+      </div>
+      <p class="tile-foot muted" id="swap-detail"></p>
+    </article>
+    <article class="tile">
+      <h2>Compressed</h2>
+      <p class="value" id="compressed">–</p>
+      <p class="tile-foot muted">memory saved by the compressor</p>
+    </article>
+    <article class="tile">
+      <h2>Cached files</h2>
+      <p class="value" id="cached">–</p>
+      <p class="tile-foot muted">reclaimable by macOS on demand</p>
+    </article>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>Last hour</h2>
+      <div class="legend" aria-label="Series legend">
+        <span class="legend-item"><span class="swatch swatch-mem"></span>Memory used</span>
+        <span class="legend-item"><span class="swatch swatch-swap"></span>Swap used</span>
+      </div>
+    </div>
+    <div id="chart-wrap" class="chart-wrap">
+      <svg id="history-chart" role="img" aria-label="Memory and swap used over the last hour"></svg>
+      <div id="chart-tooltip" class="tooltip" hidden></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>Top memory consumers</h2>
+      <p class="muted">grouped by app · Quit sends SIGTERM, Force sends SIGKILL</p>
+    </div>
+    <div id="process-list" class="process-list" aria-live="polite"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>Startup items (launchd)</h2>
+      <p class="muted">what autostarts at login · "Disable autostart" stops it coming back after reboot</p>
+    </div>
+    <div id="agent-list" class="agent-list"></div>
+  </section>
+
+  <div class="two-col">
+    <section class="card">
+      <div class="card-head"><h2>Homebrew services</h2></div>
+      <div id="service-list" class="service-list"></div>
+    </section>
+    <section class="card">
+      <div class="card-head"><h2>System actions</h2></div>
+      <div class="sys-actions">
+        <button id="purge-btn" class="btn">Purge disk cache</button>
+        <p class="muted">Frees inactive file cache. Needs <code>sudo purge</code> on most systems — the button tells you if so.</p>
+      </div>
+    </section>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+</main>
+<script src="/static/app.js"></script>
+</body>
+</html>

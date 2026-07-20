@@ -1,0 +1,179 @@
+/* RAM Manager — dashboard styles.
+   Color roles follow the validated reference dataviz palette; dark mode is
+   its own selected set of steps, not an automatic flip. */
+
+.viz-root {
+  color-scheme: light;
+  --surface-1: #fcfcfb;
+  --page: #f9f9f7;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --muted: #898781;
+  --grid: #e1e0d9;
+  --baseline: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.10);
+  --series-mem: #2a78d6;   /* categorical slot 1: blue  */
+  --series-swap: #008300;  /* categorical slot 2: green */
+  --seq-300: #6da7ec;      /* sequential blue steps for magnitude bars */
+  --seq-450: #2a78d6;
+  --status-good: #0ca30c;
+  --status-warning: #fab219;
+  --status-critical: #d03b3b;
+  --status-good-text: #006300;
+}
+@media (prefers-color-scheme: dark) {
+  .viz-root {
+    color-scheme: dark;
+    --surface-1: #1a1a19;
+    --page: #0d0d0d;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --muted: #898781;
+    --grid: #2c2c2a;
+    --baseline: #383835;
+    --border: rgba(255, 255, 255, 0.10);
+    --series-mem: #3987e5;
+    --series-swap: #008300;
+    --seq-300: #5598e7;
+    --seq-450: #3987e5;
+    --status-good-text: #0ca30c;
+  }
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body { background: var(--page); }
+
+.viz-root {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--text-primary);
+  background: var(--page);
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* -- top bar ---------------------------------------------------------- */
+.topbar { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.topbar h1 { font-size: 22px; font-weight: 700; }
+.subtitle { color: var(--text-secondary); font-size: 13px; margin-top: 2px; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.muted { color: var(--muted); font-size: 12px; }
+
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid var(--border); border-radius: 999px;
+  padding: 4px 12px; font-size: 13px; font-weight: 600;
+  background: var(--surface-1);
+}
+.pill.good #pressure-icon, .pill.good { color: var(--status-good-text); }
+.pill.warning #pressure-icon { color: var(--status-warning); }
+.pill.critical #pressure-icon { color: var(--status-critical); }
+
+/* -- KPI tiles -------------------------------------------------------- */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+.tile, .card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+.tile h2, .card h2 { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+.tile .value { font-size: 30px; font-weight: 700; margin: 8px 0 10px; }
+.tile .unit { font-size: 14px; font-weight: 500; color: var(--text-secondary); }
+.tile-foot { margin-top: 8px; }
+
+.meter { height: 8px; border-radius: 4px; background: var(--grid); overflow: hidden; }
+.meter-fill {
+  height: 100%; width: 0; border-radius: 4px;
+  background: var(--seq-450);
+  transition: width 0.6s ease;
+}
+.meter-fill.hot { background: var(--status-critical); }
+
+/* -- cards & chart ---------------------------------------------------- */
+.card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.legend { display: flex; gap: 14px; font-size: 12px; color: var(--text-secondary); }
+.legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.swatch-mem { background: var(--series-mem); }
+.swatch-swap { background: var(--series-swap); }
+
+.chart-wrap { position: relative; width: 100%; overflow-x: auto; }
+#history-chart { width: 100%; height: 220px; display: block; }
+
+.tooltip {
+  position: absolute; pointer-events: none;
+  background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 10px; font-size: 12px;
+  color: var(--text-primary); box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+  white-space: nowrap; z-index: 5;
+}
+.tooltip .tt-row { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+
+/* -- process list ----------------------------------------------------- */
+.process-list { display: flex; flex-direction: column; gap: 2px; }
+.proc-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 220px) 1fr 90px auto;
+  gap: 12px; align-items: center;
+  padding: 7px 8px; border-radius: 8px;
+}
+.proc-row:hover { background: color-mix(in oklab, var(--text-primary) 4%, transparent); }
+.proc-name { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.proc-count { font-size: 11px; color: var(--muted); font-weight: 400; }
+.proc-bar-track { height: 14px; position: relative; }
+.proc-bar {
+  position: absolute; inset: 0 auto 0 0; border-radius: 0 4px 4px 0;
+  background: var(--seq-300); min-width: 2px;
+}
+.proc-row:nth-child(-n+3) .proc-bar { background: var(--seq-450); }
+.proc-mem { font-size: 13px; font-variant-numeric: tabular-nums; text-align: right; color: var(--text-secondary); }
+.proc-actions { display: flex; gap: 6px; }
+
+/* -- buttons ---------------------------------------------------------- */
+.btn {
+  font: inherit; font-size: 12px; font-weight: 600;
+  color: var(--text-primary);
+  background: transparent; border: 1px solid var(--border);
+  border-radius: 7px; padding: 4px 10px; cursor: pointer;
+}
+.btn:hover { background: color-mix(in oklab, var(--text-primary) 7%, transparent); }
+.btn:disabled { opacity: 0.4; cursor: default; }
+.btn-danger { color: var(--status-critical); border-color: color-mix(in oklab, var(--status-critical) 40%, transparent); }
+.btn-danger:hover { background: color-mix(in oklab, var(--status-critical) 10%, transparent); }
+
+/* -- services & launchd ----------------------------------------------- */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 760px) { .two-col { grid-template-columns: 1fr; } }
+
+.service-list, .agent-list { display: flex; flex-direction: column; }
+.service-row, .agent-row {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  padding: 8px 4px; border-bottom: 1px solid var(--grid);
+  font-size: 13px;
+}
+.service-row:last-child, .agent-row:last-child { border-bottom: none; }
+.svc-status { font-size: 11px; font-weight: 600; }
+.svc-status.on { color: var(--status-good-text); }
+.svc-status.off { color: var(--muted); }
+.agent-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.agent-meta { font-size: 11px; color: var(--muted); }
+
+.sys-actions { display: flex; flex-direction: column; gap: 10px; }
+
+/* -- toast ------------------------------------------------------------ */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: var(--text-primary); color: var(--page);
+  padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 500;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25); z-index: 10;
+  max-width: 90vw;
+}
